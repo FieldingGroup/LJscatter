@@ -87,6 +87,11 @@ function load_cs_csv(file)
     table = data[:,2:end]
     #Make list of channels in the same order as in table
     channels = [loss_channels_normal[channel] for channel in headers[2:end]]
+    #Check that no cross-section is less than 0. This can incur into problems when using the StatsBase
+    #function sample. Negative weights can give rise to incorrect results.
+    if any(any.(<(0), eachcol(table)))
+        throw(ArgumentError("argument must be non-negative"))
+    end
     return table, channels
 
 end
