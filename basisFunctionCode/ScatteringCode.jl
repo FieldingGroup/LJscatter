@@ -470,7 +470,7 @@ function saveData(basis_mat, fileName,table,channels,headers)
 
         #Create and populate "crossSections&ELPs" group
         csGroup = create_group(fileID,"crossSections&ELPs")
-        csGroup["crossSectionsNames"] = headers
+        csGroup["crossSectionsNames"] = headers[2:end] #ignoring eKE
         csGroup["crossSections"] = table
         #turn ELPs into a matrix
         channels = reshape(collect(Iterators.flatten(channels)), 2, length(channels))
