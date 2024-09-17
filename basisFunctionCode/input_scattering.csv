@@ -5,3 +5,5 @@ r_grid stop,50,# Depths stop
 e0,0.2,# Escape threshold/electron affinity
 num_electrons,10000,# Number of random walks to perform
 jet_radius,10000,# Radius of microjet in nm
+crossSectionSetID,1b_240000,# ID of cross-section set eg."1b_240916g"
+extraInfo,,# Add here any extra information to pass onto the metadata
