@@ -18,7 +18,7 @@ using Roots
 
 # const cs_file = "cs_improved_1b.csv"
 # const r_grid = [x for x in 0.1:0.1:50]
-# const depth_step = 0.1 #r_grid step size
+# const r_gridStep = 0.1 #r_grid step size
 # const e0 = 0.2
 # const num_electrons = 10000 # Number of random walks to perform
 # const jet_radius = 10000 # 10 micron radius liquid microjet
@@ -40,9 +40,7 @@ const loss_channels_normal = Dict("vpp_L" => (0.092, 0.04),
 # -------- EXTRA DATA ------------
 reflected_electrons = 0 #number of electrons reflected at surface. This excludes doubly reflected electrons              
 doubly_reflected_electrons = 0 #number of electrons that should have been doubly reflected. These electrons are discarded
-#approach_angles = [] #angles at which electrons approach the surface #INCOMPATIBLE WITH TRHEADS
-#escape_angles = [] #angles at which electrons escape the surface #INCOMPATIBLE WITH TRHEADS
-# -------------------------                   
+# --------------------------------                   
 
 
 """
@@ -51,11 +49,17 @@ doubly_reflected_electrons = 0 #number of electrons that should have been doubly
 Loads the input file. It should have the following format *variable name*, *value*, *(description)*:
 
 The variable names are 
- *cs_file*,
- *r_grid*,
- *e0*,
- *num_electrons*,
- *jet_radius*
+
+*cs_file*,
+*r_grid start*,
+*r_grid step*,
+*r_grid stop*,
+*e0*,
+*num_electrons*,
+*jet_radius*,
+*crossSectionSetID*,
+*extraInfo*
+
 and can be in any order.
 """
 function load_input(file)
@@ -65,11 +69,15 @@ function load_input(file)
     inputs = Dict(zip(inputs[:,1],inputs[:,2]))
     # Assign each value to a global variable
     global cs_file = inputs["cs_file"]
+    global r_gridStart = inputs["r_grid start"]
+    global r_gridStep = inputs["r_grid step"] 
+    global r_gridStop = inputs["r_grid stop"] 
     global r_grid = [x for x in inputs["r_grid start"]:inputs["r_grid step"]:inputs["r_grid stop"]] #depth grid
-    global depth_step = inputs["r_grid step"] #r_grid step size
     global e0 = inputs["e0"] #Escape threshold
     global num_electrons = inputs["num_electrons"] # Number of random walks to perform
     global jet_radius = inputs["jet_radius"] # 10 micron radius liquid microjet
+    global crossSectionSetID = inputs["crossSectionSetID"] #ID of cross-section set ID
+    global extraInfo = inputs["extraInfo"]
     return nothing
 end
 
@@ -92,7 +100,7 @@ function load_cs_csv(file)
     if any(any.(<(0), eachcol(table)))
         throw(ArgumentError("argument must be non-negative"))
     end
-    return table, channels
+    return table, channels, headers
 
 end
 
@@ -376,7 +384,7 @@ function integrate_over_r(starting_eKEs, table, channels;
         d = bin_data(o)
         y = d[:, 2]
 
-        outputs[i] =  y .* (2 * pi * (jet_radius - r) * depth_step)
+        outputs[i] =  y .* (2 * pi * (jet_radius - r) * r_gridStep)
 
         
     end
@@ -422,13 +430,79 @@ function bin_data(data; bins=0.00:0.01:5.0)
     return hcat(x, y)
 end
 
+"""
+    saveData(filename)
+
+Saves data and metadata into an HDF5 file.
+
+The file has the following structure
+
+├─ 📂 data
+│  ├─ 🔢 bases                          #includes the basis sets
+│  ├─ 🔢 reflectedElectrons             #number of electrons that were reflected at the surface
+│  └─ 🔢 doublyReflectedElectrons       #number of electrons that should have been reflected twice (these are discarded)
+├─ 📂 crossSections&ELPs
+│  ├─ 🔢 crossSectionsNames             #name of energy loss channels
+│  ├─ 🔢 crossSections                  #cross-sections
+│  └─ 🔢 energyLossParameters           #energy loss parameters
+└─ 📂 metadata
+   ├─ 🏷️ E0                             # escape threshold
+   ├─ 🏷️ crossSectionSetID              # cross-section set ID 1b_yymmdd
+   ├─ 🏷️ extraInfo                      
+   ├─ 🏷️ jet_radius
+   ├─ 🏷️ num_electrons
+   ├─ 🏷️ r_grid
+   ├─ 🏷️ r_gridEnd
+   ├─ 🏷️ r_gridStart
+   └─ 🏷️ r_gridStep
+"""
+function saveData(basis_mat, fileName,table,channels,headers)
+    #Create the file if it doesn't exist
+    h5open(fileName, "cw") do fileID
+    end
+    #Overwrite the file and open in write mode
+    h5open(fileName, "w") do fileID
+        #Create and populate "data" group
+        dataGroup = create_group(fileID,"data")
+        dataGroup["bases"] = basis_mat
+        dataGroup["reflectedElectrons"] = reflected_electrons
+        dataGroup["doublyReflectedElectrons"] = doubly_reflected_electrons
+
+        #Create and populate "crossSections&ELPs" group
+        csGroup = create_group(fileID,"crossSections&ELPs")
+        csGroup["crossSectionsNames"] = headers
+        csGroup["crossSections"] = table
+        #turn ELPs into a matrix
+        channels = reshape(collect(Iterators.flatten(channels)), 2, length(channels))
+        csGroup["energyLossParameters"] = channels
+
+        #Create and populate "metadata" group
+        metadataGroup = create_group(fileID,"metadata")
+        attributes(metadataGroup)["E0"] = e0
+        attributes(metadataGroup)["r_grid"] = r_grid
+        attributes(metadataGroup)["r_gridStart"] = r_gridStart
+        attributes(metadataGroup)["r_gridStep"] = r_gridStep
+        attributes(metadataGroup)["r_gridStop"] = r_gridStop
+        attributes(metadataGroup)["r_gridEnd"] = r_gridStop
+        attributes(metadataGroup)["num_electrons"] = num_electrons
+        attributes(metadataGroup)["jet_radius"] = jet_radius
+        attributes(metadataGroup)["crossSectionSetID"] = crossSectionSetID
+        attributes(metadataGroup)["extraInfo"] = extraInfo
+
+    end
+    return nothing
+end
+
+
 function main()
     load_input("input_scattering.csv")
-    table,channels = load_cs_csv(cs_file)
+    table,channels,headers = load_cs_csv(cs_file)
 
     basis_grid = [ ones(num_electrons) * i for i in 0.01:0.01:5.0 ]
     basis_10 = map(x -> integrate_over_r(x, table, channels; e0=e0, r_grid=r_grid), basis_grid)
     
+
+
     basis_uni = apply_pdf(basis_10, Uniform(first(r_grid),last(r_grid)), r_grid=r_grid)
     basis_exp = apply_pdf(basis_10, Exponential(1), r_grid=r_grid)
     basis_gau = apply_pdf(basis_10, Normal(1), r_grid=r_grid)
@@ -438,13 +512,8 @@ function main()
     writedlm("bases/basis_gau.txt", hcat(basis_gau...))
 
     basis_mat = cat(map(x ->hcat(x...) ,basis_10)...,dims=3)
-    fid = h5open("bases/allData.h5","cw") #this creates the file if it doesn't exist
-    close(fid)
-    fid = h5open("bases/allData.h5","w") #this overwrites the file
-    fid["bases$(e0)"] = basis_mat
-    fid["reflected_electrons"] = reflected_electrons
-    fid["doubly_reflected_electrons"] = doubly_reflected_electrons
-    close(fid)
-
+    
+    saveData(basis_mat,"bases/allData.h5",table,channels,headers)
 end
+
 main()
