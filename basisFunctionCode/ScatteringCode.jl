@@ -84,7 +84,7 @@ end
 """
     load_cs_csv(file)
 
-The (in)elastic scattering cross sections per-channel as a function of electron are required as input as a
+The (in)elastic scattering cross sections per-channel as a function of electron kinetic energy are required as input as a
 CSV file. 
 The cross sections are already inter/extrapolated.
 """
@@ -95,7 +95,7 @@ function load_cs_csv(file)
     table = data[:,2:end]
     #Make list of channels in the same order as in table
     channels = [loss_channels_normal[channel] for channel in headers[2:end]]
-    #Check that no cross-section is less than 0. This can incur into problems when using the StatsBase
+    #Check that no cross-section is less than 0. This can cause problems when using the StatsBase
     #function sample. Negative weights can give rise to incorrect results.
     if any(any.(<(0), eachcol(table)))
         throw(ArgumentError("argument must be non-negative"))
@@ -107,12 +107,9 @@ end
 
 """
     rand_normal_positive(μ, fwhm)
-Generate a number from a normal distribution but force it to be
-positive.
+Generate a number from a normal distribution but only accept positive numbers.
 
-This function is used exclusively for the randomised eKE loss per
-inelastic collision. The widths of the librational resonance are
-given as FWHMs in the paper but we need the standard deviation.
+This function is used for the randomised eKE loss per inelastic collision.
 """
 function rand_normal_positive(μ, fwhm)
     while true
@@ -139,6 +136,7 @@ the energy loss and the step length sampled from and exponential
 distribution of the mean free path,
 """
 function lose_eKE(eKE, table::Matrix{Float64}, channels)
+    # Get cross-sections at eKE
     w = eval_cs_lookup(eKE, table)
 
     # Choice of channel is weighted by the relative cross sections.
@@ -147,19 +145,21 @@ function lose_eKE(eKE, table::Matrix{Float64}, channels)
     # Compute the (positive) energy loss.
     loss = rand_normal_positive(channel...) #three dots just splits the tuple
 
-    # The total cross section.
+    # The total cross section
+    # The solid angle factor here was present in an older version
+    # and is kept here for comparison
     if SolidAngle
         σ = sum(w) * 1e-2 * (1 / (4π))
     else
         σ = sum(w) * 1e-2
     end
-    # Number density of scatterers.
+    # Number density of scatterers (water).
     ρ = (1e-21 / 18.015) * 6.022141e23
 
     # The mean free path.
     Λ = 1 / (ρ * σ)
 
-    # Additionally return the random step length from an exponential
+    # Return the energy loss and random step length from an exponential
     # distribution.
     return loss, rand(Exponential(Λ))
 end
@@ -174,9 +174,11 @@ be reflected. Multiple reflections in
 """
 function random_walk_jet(eKE, pos, table, channels; e0=e0)
     if eKE < 0.0
+        # End trajectory
         return eKE
     end
 
+    # Get energy loss and step length
     loss, dr = lose_eKE(eKE, table, channels)
 
     # Use a random orthonormal rotation matrix to define the isotropic
@@ -196,7 +198,7 @@ function random_walk_jet(eKE, pos, table, channels; e0=e0)
     r = norm(new_pos[1:2])
     
     #If the radial coordinate r is greater than the jet radius,
-    #the electron may escape or be reflected.
+    #then the electron may escape or be reflected.
     #An electron is reflected if the its energy perpendicular to the surface
     #is higher than the potential energy barrier given b the electron affinity.
     if (r >= jet_radius)
@@ -205,23 +207,25 @@ function random_walk_jet(eKE, pos, table, channels; e0=e0)
         #perpendicular to the surface
         norm_projection, escape_point, approach_angle = escape_filter(eKE+e0, new_pos, pos; R = jet_radius)
         if norm_projection >= e0
+            # The electron successfully escapes
+            # End trajectory
             return eKE
         else
             new_pos = reflect_electron(new_pos, escape_point)
             #If the angle of approach to the surface is very shallow,
             #and the electron does not have enough energy to escape,
             #multiple reflection must occur within one step.
-            #This is very rare and hard to deal with,
-            #so (for now?) this electrons will be discarded, but recorded.
+            #This is extremely rare if using the parameters employed in the paper
+            # and hard to deal with, so (for now?) this electrons will be discarded,
+            # but a record of them is kept.
             if  norm(new_pos[1:2])>=jet_radius
                 println("P1,P2,Q: $(new_pos), $(pos), $(escape_point)")
+                # End trajectory
                 return -1
             end
         end
     end
-    # Determine the eKE loss for the collision and take an
-    # isotropic random step.
-    # And recursively run this function again, accumulating the
+    # Recursively run this function again, accumulating the
     # eKE loss and the change in position.
     return random_walk_jet(eKE - loss, new_pos, table, channels)
 end
@@ -238,8 +242,9 @@ function escape_filter(eKE, new_pos, old_pos; R = jet_radius)
     P1 = old_pos
     P2 = new_pos
     
-    #Determine parameters of line going through P1 and P2 and
+    #Determine parameters of the line going through P1 and P2 and
     #find the intersections with the surface of the circle.
+    #Using simultaneous equations.
 
     #If points are in a vertical line, y = mx+c cannot be used.
     if P1[1] == P2[1]
@@ -290,9 +295,9 @@ function escape_filter(eKE, new_pos, old_pos; R = jet_radius)
     else
         Q = x2,y2
     end
-    #Q in polar coordinates is described by (r,θ). 
-    #The slope of the normal to the circle at r,θ is given by tan(θ),
-    #which is equal to y/x (cartesian coordinates).
+    # The slope of the normal to the circle at Q
+    # is given by Δy/Δx. As the origin is at (0,0)
+    # the slope is Q_y/Q_x
     if Q[1] == 0 #the normal vector is vertical
         normal_vec = [0,1,0]
     else
@@ -300,7 +305,7 @@ function escape_filter(eKE, new_pos, old_pos; R = jet_radius)
         normal_vec = [1,normal_slope,0]
         normal_vec = normal_vec / norm(normal_vec)
     end
-    #Projecting P2-P1 onto the normal
+    #Projecting the vector P2-P1 onto the normal
     P_vec = (P2-P1)
     P_vec = P_vec / norm(P_vec)
     # Energy projection = E (P.n)^2
@@ -325,9 +330,9 @@ function reflect_electron(new_pos, Q)
     P2 = new_pos
     #Finding the point of reflection A(x0,y0)
     #Checking for special cases (ie when slopes would be Inf)
-    if Q[1] == 0 # normal is vertical and A's coordinates are (P2x,±r)
+    if Q[1] == 0 # normal is vertical and A's coordinates are (P2_x,±r)
         x0, y0 = P2[1], Q[2]
-    elseif Q[2] == 0 # tangent is vertical and A's coordinates are (±r,P2y)
+    elseif Q[2] == 0 # tangent is vertical and A's coordinates are (±r,P2_y)
         x0, y0 = Q[1], P2[2]
     else #normal and tangent are not horizontal/vertical
         #Parameters of the normal going through P2
@@ -346,7 +351,7 @@ function reflect_electron(new_pos, Q)
     if norm(refl_pos[1:2]) >= jet_radius
         global doubly_reflected_electrons
         doubly_reflected_electrons += 1
-        # println("double refl needed")
+        # println("double reflection needed")
         # throw(ErrorException("The electron ended up outside the jet at $(refl_pos).\nDouble reflection is not supported yet.\nP1: $P1 \nP2: $P2 \nQ: $Q"))
     else
         global reflected_electrons
@@ -370,8 +375,16 @@ function run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
 end
 
 
+"""
+    integrate_over_r(starting_eKEs, table, channels;
+                          e0=e0, r_grid=r_grid)
+
+Runs run_jet_walk for all depths. Removes invalid trajectories, i.e., electrons with negative eKE.
+Bins data with bin_data (in 0.01 eV steps between 0 and 5 eV).
+Scales distribution bu 2πr, accounting for the fact that electrons are initialised only on the x axis.
+"""
 function integrate_over_r(starting_eKEs, table, channels;
-                          e0=e0, r_grid=1:0.25:1001)
+                          e0=e0, r_grid=r_grid)
     outputs = similar(r_grid,Vector{Float64})
     Threads.@threads for i in eachindex(r_grid)
         r = r_grid[i]
@@ -392,17 +405,16 @@ function integrate_over_r(starting_eKEs, table, channels;
     return outputs
 end
 
-function apply_pdf(basis, dist; r_grid=1:0.25:1001)
+"""
+    apply_pdf(basis, dist; r_grid=r_grid)
+
+Applies simple concentration profile using functions from Distributions.jl.
+The PDF is determined at each step on the grid and the basis set integrated over depth.
+
+"""
+function apply_pdf(basis, dist; r_grid=r_grid)
     reduced = similar(basis)
-    # At each depth, we need to apply the PDF to the basis functions.
-    #
-    # In the simplest case, the PDF comes from a distribution provided by
-    # Distributions.jl (e.g. Normal() or Exponential()) and these are evaluated
-    # simply using pdf(dist, x) for each x in r_grid.
-    #
-    # For a custom profile, you would need an array with the probability at each
-    # point in r_grid. Presumably, this array would need to be normalised to sum
-    # to 1.
+    
     p = [ pdf(dist, x) for x in r_grid ]
     for (i, b) in enumerate(basis)
         basis_w_pdf = b .* p
@@ -415,14 +427,16 @@ end
 
 
 
-# Take a set of data points and transfer it onto a binned grid. Typically,
-# we employ a grid spacing of 0.01 eV between 0.01 and 5.00 eV. The default
-# grid starts one point earlier due to a quirk in Histogram.
+"""
+    bin_data(data; bins=0.00:0.01:5.0)
+
+Bin data according to bins and returns the left edges of the bins
+and the heights of the bins.
+"""
 function bin_data(data; bins=0.00:0.01:5.0)
     f = fit(Histogram, data, bins,closed=:right)
 
-    # The last bin is removed due to the previously mentioned quirk that makes
-    # this list one item too long.
+    # Get left edges of the bins
     x = collect(f.edges[1])[1:end-1]
 
     # The weights are the number of counts in each bin.
