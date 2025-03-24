@@ -134,6 +134,7 @@ end
 
 """
     lose_eKE(eKE, table::Matrix{Float64}, channels)
+
 Samples the cross-sections at a certain eKE and returns
 the energy loss and the step length sampled from and exponential
 distribution of the mean free path,
@@ -168,14 +169,15 @@ function lose_eKE(eKE, table::Matrix{Float64}, channels)
 end
 
 """
-    random_walk_jet(eKE, pos, table, channels)
+    propagate(eKE, pos, table, channels; e0=e0)
+
 Recursively runs a single random walk step, by updating the energy and position
 of the electron. The energy loss and step length are sampled using `lose_eKE` and 
 all scattering events are assumed to be isotropic.
 When electrons reach the surface they can escape if they have enough energy or
 be reflected. Multiple reflections in
 """
-function random_walk_jet(eKE, pos, table, channels; e0=e0)
+function propagate(eKE, pos, table, channels; e0=e0)
     if eKE < 0.0
         # End trajectory
         return eKE
@@ -230,11 +232,12 @@ function random_walk_jet(eKE, pos, table, channels; e0=e0)
     end
     # Recursively run this function again, accumulating the
     # eKE loss and the change in position.
-    return random_walk_jet(eKE - loss, new_pos, table, channels)
+    return propagate(eKE - loss, new_pos, table, channels)
 end
 
 """
     escape_filter(eKE, new_pos, old_pos; r = jet_radius)
+    
 This function determines the intersection between the vector going through two points
 and the circumference of the jet. It determines the velocity component of the vector
 perpendicular to the surface and finds the corresponding kinetic energy.
@@ -321,6 +324,7 @@ end
 
 """
     reflect_electron(new_pos, Q)
+
 Reflects electron on the surface of the jet.
 It determines the equation of the tangent at the exit point and of the perpendicular line going through
 the unreflected point (P2), it finds their intersection A and reflects the electron through it.
@@ -364,33 +368,36 @@ end
 
 
 """
-    run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
-This function runs `random_walk_jet` for all starting eKEs at a certain depth.
+    run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)
+
+This function runs `propagate` for all starting eKEs at a certain depth.
+
+Normally starting_eKEs are all the same. 
 """
-function run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
+function run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)
     pos = SVector(jet_radius - depth, 0.0, 0.0)
     out = similar(starting_eKEs)
     for i in eachindex(out)
-        out[i] = random_walk_jet(starting_eKEs[i], pos, table, channels; e0=e0)
+        out[i] = propagate(starting_eKEs[i], pos, table, channels; e0=e0)
     end
     return out
 end
 
 
 """
-    integrate_over_r(starting_eKEs, table, channels;
+    run_depths(starting_eKEs, table, channels;
                           e0=e0, r_grid=r_grid)
-
-Runs run_jet_walk for all depths. Removes invalid trajectories, i.e., electrons with negative eKE.
+                          
+Runs `run_depth_trajectories` for all depths. Removes invalid trajectories, i.e., electrons with negative eKE.
 Bins data with bin_data (in 0.01 eV steps between 0 and 5 eV).
 Scales distribution bu 2πr, accounting for the fact that electrons are initialised only on the x axis.
 """
-function integrate_over_r(starting_eKEs, table, channels;
+function run_depths(starting_eKEs, table, channels;
                           e0=e0, r_grid=r_grid)
     outputs = similar(r_grid,Vector{Float64})
     Threads.@threads for i in eachindex(r_grid)
-        r = r_grid[i]
-        o = run_jet_walk(starting_eKEs, r, table, channels; e0=e0)::Vector{Float64}
+        depth = r_grid[i]
+        o = run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)::Vector{Float64}
 
         # Remove electrons with eKE <= 0 eV
         o = filter((x) -> x > 0, o)
@@ -400,7 +407,6 @@ function integrate_over_r(starting_eKEs, table, channels;
         y = d[:, 2]
 
         outputs[i] =  y .* (2 * pi * (jet_radius - r) * r_gridStep)
-
         
     end
 
@@ -460,7 +466,7 @@ The file has the following structure
 ├─ 📂 crossSections&ELPs
 │  ├─ 🔢 crossSectionsNames             #name of energy loss channels
 │  ├─ 🔢 crossSections                  #cross-sections
-│  └─ 🔢 energyLossParameters           #energy loss parameters
+│  └─ 🔢 energyLossParameters           #energy loss parameters (ELPs)
 └─ 📂 metadata
    ├─ 🏷️ E0                             # escape threshold
    ├─ 🏷️ crossSectionSetID              # cross-section set ID 1b_yymmdd
@@ -486,7 +492,7 @@ function saveData(basis_mat, fileName,table,channels,headers)
 
         #Create and populate "crossSections&ELPs" group
         csGroup = create_group(fileID,"crossSections&ELPs")
-        csGroup["crossSectionsNames"] = headers[2:end] #ignoring eKE
+        csGroup["crossSectionsNames"] = headers[2:end] #ignoring label "eKE"
         csGroup["crossSections"] = table
         #turn ELPs into a matrix
         channels = reshape(collect(Iterators.flatten(channels)), 2, length(channels))
@@ -515,19 +521,19 @@ function main()
     table,channels,headers = load_cs_csv(cs_file)
 
     basis_grid = [ ones(num_electrons) * i for i in 0.01:0.01:5.0 ]
-    basis_10 = map(x -> integrate_over_r(x, table, channels; e0=e0, r_grid=r_grid), basis_grid)
+    basis_set = map(x -> run_depths(x, table, channels; e0=e0, r_grid=r_grid), basis_grid)
     
 
 
-    basis_uni = apply_pdf(basis_10, Uniform(first(r_grid),last(r_grid)), r_grid=r_grid)
-    basis_exp = apply_pdf(basis_10, Exponential(1), r_grid=r_grid)
-    basis_gau = apply_pdf(basis_10, Normal(1), r_grid=r_grid)
+    basis_uni = apply_pdf(basis_set, Uniform(first(r_grid),last(r_grid)), r_grid=r_grid)
+    basis_exp = apply_pdf(basis_set, Exponential(1), r_grid=r_grid)
+    basis_gau = apply_pdf(basis_set, Normal(1), r_grid=r_grid)
 
     writedlm("bases/basis_uni.txt", hcat(basis_uni...))
     writedlm("bases/basis_exp.txt", hcat(basis_exp...))
     writedlm("bases/basis_gau.txt", hcat(basis_gau...))
 
-    basis_mat = cat(map(x ->hcat(x...) ,basis_10)...,dims=3)
+    basis_mat = cat(map(x ->hcat(x...) ,basis_set)...,dims=3)
     
     saveData(basis_mat,"bases/allData.h5",table,channels,headers)
 end
