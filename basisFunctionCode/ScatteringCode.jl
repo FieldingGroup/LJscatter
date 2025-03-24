@@ -324,7 +324,8 @@ the unreflected point (P2), it finds their intersection A and reflects the elect
 This is to determine the *x* and *y* coordinates of the reflection.
 The *z* coordinate is the same for both the transmitted and reflected electron
 
-Does not include double reflection
+Does not include double reflection, i.e., the case in which the electron must be refledcted multiple
+times to remain inside the jet
 """
 function reflect_electron(new_pos, Q)
     P2 = new_pos
@@ -351,8 +352,6 @@ function reflect_electron(new_pos, Q)
     if norm(refl_pos[1:2]) >= jet_radius
         global doubly_reflected_electrons
         doubly_reflected_electrons += 1
-        # println("double reflection needed")
-        # throw(ErrorException("The electron ended up outside the jet at $(refl_pos).\nDouble reflection is not supported yet.\nP1: $P1 \nP2: $P2 \nQ: $Q"))
     else
         global reflected_electrons
         reflected_electrons +=1
