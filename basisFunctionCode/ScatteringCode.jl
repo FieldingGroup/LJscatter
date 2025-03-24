@@ -396,8 +396,8 @@ function run_depths(starting_eKEs, table, channels;
                           e0=e0, r_grid=r_grid)
     outputs = similar(r_grid,Vector{Float64})
     Threads.@threads for i in eachindex(r_grid)
-        r = r_grid[i]
-        o = run_depth_trajectories(starting_eKEs, r, table, channels; e0=e0)::Vector{Float64}
+        depth = r_grid[i]
+        o = run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)::Vector{Float64}
 
         # Remove electrons with eKE <= 0 eV
         o = filter((x) -> x > 0, o)
@@ -407,7 +407,6 @@ function run_depths(starting_eKEs, table, channels;
         y = d[:, 2]
 
         outputs[i] =  y .* (2 * pi * (jet_radius - r) * r_gridStep)
-
         
     end
 
@@ -467,7 +466,7 @@ The file has the following structure
 ├─ 📂 crossSections&ELPs
 │  ├─ 🔢 crossSectionsNames             #name of energy loss channels
 │  ├─ 🔢 crossSections                  #cross-sections
-│  └─ 🔢 energyLossParameters           #energy loss parameters
+│  └─ 🔢 energyLossParameters           #energy loss parameters (ELPs)
 └─ 📂 metadata
    ├─ 🏷️ E0                             # escape threshold
    ├─ 🏷️ crossSectionSetID              # cross-section set ID 1b_yymmdd
@@ -493,7 +492,7 @@ function saveData(basis_mat, fileName,table,channels,headers)
 
         #Create and populate "crossSections&ELPs" group
         csGroup = create_group(fileID,"crossSections&ELPs")
-        csGroup["crossSectionsNames"] = headers[2:end] #ignoring eKE
+        csGroup["crossSectionsNames"] = headers[2:end] #ignoring label "eKE"
         csGroup["crossSections"] = table
         #turn ELPs into a matrix
         channels = reshape(collect(Iterators.flatten(channels)), 2, length(channels))
@@ -522,19 +521,19 @@ function main()
     table,channels,headers = load_cs_csv(cs_file)
 
     basis_grid = [ ones(num_electrons) * i for i in 0.01:0.01:5.0 ]
-    basis_10 = map(x -> run_depths(x, table, channels; e0=e0, r_grid=r_grid), basis_grid)
+    basis_set = map(x -> run_depths(x, table, channels; e0=e0, r_grid=r_grid), basis_grid)
     
 
 
-    basis_uni = apply_pdf(basis_10, Uniform(first(r_grid),last(r_grid)), r_grid=r_grid)
-    basis_exp = apply_pdf(basis_10, Exponential(1), r_grid=r_grid)
-    basis_gau = apply_pdf(basis_10, Normal(1), r_grid=r_grid)
+    basis_uni = apply_pdf(basis_set, Uniform(first(r_grid),last(r_grid)), r_grid=r_grid)
+    basis_exp = apply_pdf(basis_set, Exponential(1), r_grid=r_grid)
+    basis_gau = apply_pdf(basis_set, Normal(1), r_grid=r_grid)
 
     writedlm("bases/basis_uni.txt", hcat(basis_uni...))
     writedlm("bases/basis_exp.txt", hcat(basis_exp...))
     writedlm("bases/basis_gau.txt", hcat(basis_gau...))
 
-    basis_mat = cat(map(x ->hcat(x...) ,basis_10)...,dims=3)
+    basis_mat = cat(map(x ->hcat(x...) ,basis_set)...,dims=3)
     
     saveData(basis_mat,"bases/allData.h5",table,channels,headers)
 end
