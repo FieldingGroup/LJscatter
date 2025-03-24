@@ -134,6 +134,7 @@ end
 
 """
     lose_eKE(eKE, table::Matrix{Float64}, channels)
+
 Samples the cross-sections at a certain eKE and returns
 the energy loss and the step length sampled from and exponential
 distribution of the mean free path,
@@ -168,14 +169,15 @@ function lose_eKE(eKE, table::Matrix{Float64}, channels)
 end
 
 """
-    random_walk_jet(eKE, pos, table, channels)
+    propagate(eKE, pos, table, channels; e0=e0)
+
 Recursively runs a single random walk step, by updating the energy and position
 of the electron. The energy loss and step length are sampled using `lose_eKE` and 
 all scattering events are assumed to be isotropic.
 When electrons reach the surface they can escape if they have enough energy or
 be reflected. Multiple reflections in
 """
-function random_walk_jet(eKE, pos, table, channels; e0=e0)
+function propagate(eKE, pos, table, channels; e0=e0)
     if eKE < 0.0
         # End trajectory
         return eKE
@@ -230,7 +232,7 @@ function random_walk_jet(eKE, pos, table, channels; e0=e0)
     end
     # Recursively run this function again, accumulating the
     # eKE loss and the change in position.
-    return random_walk_jet(eKE - loss, new_pos, table, channels)
+    return propagate(eKE - loss, new_pos, table, channels)
 end
 
 """
@@ -366,36 +368,36 @@ end
 
 
 """
-    run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
+    run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)
 
-This function runs `random_walk_jet` for all starting eKEs at a certain depth.
+This function runs `propagate` for all starting eKEs at a certain depth.
 
 Normally starting_eKEs are all the same. 
 """
-function run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
+function run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)
     pos = SVector(jet_radius - depth, 0.0, 0.0)
     out = similar(starting_eKEs)
     for i in eachindex(out)
-        out[i] = random_walk_jet(starting_eKEs[i], pos, table, channels; e0=e0)
+        out[i] = propagate(starting_eKEs[i], pos, table, channels; e0=e0)
     end
     return out
 end
 
 
 """
-    integrate_over_r(starting_eKEs, table, channels;
+    run_depths(starting_eKEs, table, channels;
                           e0=e0, r_grid=r_grid)
-
-Runs run_jet_walk for all depths. Removes invalid trajectories, i.e., electrons with negative eKE.
+                          
+Runs `run_depth_trajectories` for all depths. Removes invalid trajectories, i.e., electrons with negative eKE.
 Bins data with bin_data (in 0.01 eV steps between 0 and 5 eV).
 Scales distribution bu 2πr, accounting for the fact that electrons are initialised only on the x axis.
 """
-function integrate_over_r(starting_eKEs, table, channels;
+function run_depths(starting_eKEs, table, channels;
                           e0=e0, r_grid=r_grid)
     outputs = similar(r_grid,Vector{Float64})
     Threads.@threads for i in eachindex(r_grid)
         r = r_grid[i]
-        o = run_jet_walk(starting_eKEs, r, table, channels; e0=e0)::Vector{Float64}
+        o = run_depth_trajectories(starting_eKEs, r, table, channels; e0=e0)::Vector{Float64}
 
         # Remove electrons with eKE <= 0 eV
         o = filter((x) -> x > 0, o)
@@ -520,7 +522,7 @@ function main()
     table,channels,headers = load_cs_csv(cs_file)
 
     basis_grid = [ ones(num_electrons) * i for i in 0.01:0.01:5.0 ]
-    basis_10 = map(x -> integrate_over_r(x, table, channels; e0=e0, r_grid=r_grid), basis_grid)
+    basis_10 = map(x -> run_depths(x, table, channels; e0=e0, r_grid=r_grid), basis_grid)
     
 
 
