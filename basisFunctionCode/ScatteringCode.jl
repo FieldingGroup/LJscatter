@@ -235,6 +235,7 @@ end
 
 """
     escape_filter(eKE, new_pos, old_pos; r = jet_radius)
+    
 This function determines the intersection between the vector going through two points
 and the circumference of the jet. It determines the velocity component of the vector
 perpendicular to the surface and finds the corresponding kinetic energy.
@@ -321,6 +322,7 @@ end
 
 """
     reflect_electron(new_pos, Q)
+
 Reflects electron on the surface of the jet.
 It determines the equation of the tangent at the exit point and of the perpendicular line going through
 the unreflected point (P2), it finds their intersection A and reflects the electron through it.
@@ -365,7 +367,10 @@ end
 
 """
     run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
+
 This function runs `random_walk_jet` for all starting eKEs at a certain depth.
+
+Normally starting_eKEs are all the same. 
 """
 function run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
     pos = SVector(jet_radius - depth, 0.0, 0.0)
