@@ -7,9 +7,14 @@ using HDF5
 using Plots
 using DelimitedFiles
 
+
 h5path = raw"bases/allData.h5"
-fileName = "bases/basisConcProfiles.h5"
+fileName = raw"bases/basisConcProfiles.h5"
 amplitudes = [0.,0.1,0.2,.5,1.,2.,5.,10.,20.,50.,100.]
+
+### Standard values for concentration depth profile
+STAND_CENTRE = 0.1 #nm
+STAND_FWHM = 0.4 #nm
 
 """
     load_input(file)
@@ -75,7 +80,7 @@ end
 Defines a standard concentratin profile with its gaussian centred
 at 0.1 nm and with a FWHM of 0.4 nm.
 """
-standProfile(x, amp, offset) = concProfile(x, amp, 0.1, 0.4, offset)
+standProfile(x, amp, offset) = concProfile(x, amp, STAND_CENTRE, STAND_FWHM, offset)
 
 """
     normaliseProfile(r_grid,concProfile)
@@ -87,6 +92,7 @@ function normaliseProfile(r_gridStep,concProfile)
     normFactor = r_gridStep * sum(concProfile)
     return 1/normFactor .* concProfile
 end
+
 """
     applyConcProfile(basis_mat,concProfile)
 
@@ -117,7 +123,7 @@ end
 
 #open HDF5 file
 function main()
-    load_input("PostUpgrade\\hdf5 test\\input_scattering_test.csv")
+    load_input("input_scattering.csv")
 
     basis_mat = h5open(h5path,"r") do fid
         read(fid["data"]["bases"])
@@ -144,7 +150,7 @@ function main()
             scaledBasis = applyConcProfile(basis_mat,profile)
             basis_integrated = integrateAxis(scaledBasis)
 
-            dataGroup["basisSet_$amp"] = hcat(basis_integrated...)
+            dataGroup["basisSet_$amp"] = basis_integrated
         end
         attributes(fileID["metadata"])["gaussianAmplitudes"] = amplitudes
     end
