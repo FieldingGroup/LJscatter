@@ -406,7 +406,7 @@ function run_depths(starting_eKEs, table, channels;
         d = bin_data(o)
         y = d[:, 2]
 
-        outputs[i] =  y .* (2 * pi * (jet_radius - r) * r_gridStep)
+        outputs[i] =  y .* (2 * pi * (jet_radius - depth) * r_gridStep)
         
     end
 
