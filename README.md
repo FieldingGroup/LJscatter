@@ -11,6 +11,7 @@ UVLJscatter is a Monte-Carlo simulation program that models electron transport i
 
 ### Julia setup
 The Monte-Carlo simulation in [basisFunctionCode](basisFunctionCode) uses Julia and has only been tested with version 1.7.0.
+
 Julia 1.7.0 may be downloaded and installed from [here](https://julialang.org/downloads/oldreleases/).
 The installation may be verified by running `julia --version` in the terminal or command prompt.
 The required dependencies are included in `Project.toml` and `Manifest.toml`.
