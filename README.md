@@ -2,9 +2,8 @@
 
 ## About
 
-UVLJscatter is a Monte-Carlo simulation program that models electron transport in liquid microjets.
+UVLJscatter is a Monte-Carlo simulation program that models electron transport in liquid microjets. It models the scattering of electrons with kinetic energies below 5 eV near the surface and the transmission of electrons through the surface of liquid jets. A detailed account of its application to ultraviolet liquid-microjet photoelectron spectra is given in [Simonetti and Fielding, 2025](doi.org).
 
-*[Detailed description of code]*
 
 
 ## Installation
@@ -20,8 +19,7 @@ It can also be downloaded from <https://github.com/edosim/UVLJscatter>
 
 
 ### Julia setup
-The Monte-Carlo simulation in [basisFunctionCode](basisFunctionCode) uses Julia and has only been tested with version 1.7.0.
-Julia 1.7.0 may be downloaded and installed from [here](https://julialang.org/downloads/oldreleases/).
+The Monte-Carlo simulation in [basisFunctionCode](basisFunctionCode) uses Julia and has only been tested with version 1.7.0, which may be downloaded and installed from [here](https://julialang.org/downloads/oldreleases/).
 The installation may be verified by running `julia --version` in the terminal or command prompt.
 
 The required dependencies are included in `Project.toml` and `Manifest.toml` and may be installed by running 
@@ -37,7 +35,7 @@ in [basisFunctionCode](basisFunctionCode) from the terminal or command prompt.
 
 ### Python setup
 
-The retrieval code in [Analysis](Analysis) uses Python and Jupyter notebooks. One way to install and manage the packages in Python is to use [Anaconda Distribution](https://www.anaconda.com/download/success).
+The retrieval code in [Analysis](Analysis) uses Python and Jupyter notebooks. One way to install and manage the packages in Python is to use [Anaconda](https://www.anaconda.com/download/success).
 
 [`requirements.txt`](Analysis/requirements.txt) may be used to create a conda environment with all the required dependencies: 
 
@@ -64,3 +62,7 @@ The file [ScatteringCode_angles.jl](basisFunctionCode\ScatteringCode_angles.jl) 
 ### Retrieval of true photoelectron spectra
 
 The code in [Analysis](Analysis) is used to retrive true photoelectron spectra from experimental ones. The notebook [SpectralRetrieval.ipynb](Analysis\SpectralRetrieval.ipynb) contains the code and instructions for the retrieval. [ShowH5structure.ipynb](Analysis\ShowH5structure.ipynb) shows the structure and metadata of the simulation results.
+
+## License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
