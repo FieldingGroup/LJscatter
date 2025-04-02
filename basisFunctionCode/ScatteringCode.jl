@@ -16,12 +16,6 @@ using HDF5
 using Roots
 
 
-# const cs_file = "cs_improved_1b.csv"
-# const r_grid = [x for x in 0.1:0.1:50]
-# const r_gridStep = 0.1 #r_grid step size
-# const e0 = 1.0
-# const num_electrons = 10_000 # Number of random walks to perform
-# const jet_radius = 10_000 # 10 micron radius liquid microjet
 
 # In an older version a 4π factor was *incorrectly* used when converting from cross-section to MFP
 # Setting SolidAngle to true will include this factor.
