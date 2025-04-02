@@ -16,7 +16,7 @@ This repository may be cloned to your local machine using git:
 git clone https://github.com/edosim/UVLJscatter.git
 ```
 
-It can also be downloaded from <https://github.com/edosim/UVLJscatter.git>
+It can also be downloaded from <https://github.com/edosim/UVLJscatter>
 
 
 ### Julia setup
