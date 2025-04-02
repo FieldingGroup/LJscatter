@@ -42,7 +42,7 @@ The retrieval code in [Analysis](Analysis) uses Python and Jupyter notebooks. On
 [`requirements.txt`](Analysis/requirements.txt) may be used to create a conda environment with all the required dependencies: 
 
 ```
-conda create --name <env> --file <this file>
+conda create --name <env> --file requirements.txt
 conda activate <env>
 ```
 
