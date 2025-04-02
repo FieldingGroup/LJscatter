@@ -2,7 +2,7 @@
 
 ## About
 
-UVLJscatter is a Monte-Carlo simulation program that models electron transport in liquid microjets. It models the scattering of electrons with kinetic energies below 5 eV near the surface and the transmission of electrons through the surface of liquid jets. A detailed account of its application to ultraviolet liquid-microjet photoelectron spectra is given in [Simonetti and Fielding, 2025]("DOI not yet available").
+UVLJscatter is a Monte-Carlo simulation program that models electron transport in liquid microjets. It models the scattering of electrons with kinetic energies below 5 eV near the surface and the transmission of electrons through the surface of liquid jets. A detailed account of its application to ultraviolet liquid-microjet photoelectron spectra is given in [Simonetti and Fielding, 2025](# "DOI not yet available").
 
 
 
