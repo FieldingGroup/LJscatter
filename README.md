@@ -40,10 +40,11 @@ The retrieval code in [Analysis](Analysis) uses Python and Jupyter notebooks. On
 [`requirements.txt`](Analysis/requirements.txt) may be used to create a conda environment with all the required dependencies: 
 
 ```
-conda create --name <env> --file requirements.txt
-conda activate <env>
+conda create --name <your_env_name> --file requirements.txt
+conda activate <your_env_name>
 ```
 
+The required dependencies are `numpy`, `scipy`, `matplotlib`, `h5py`, and either`jupyter lab` or `jupyter notebook`.
 
 ## Usage
 
@@ -61,7 +62,16 @@ The file [ScatteringCode_angles.jl](basisFunctionCode\ScatteringCode_angles.jl) 
 
 ### Retrieval of true photoelectron spectra
 
-The code in [Analysis](Analysis) is used to retrive true photoelectron spectra from experimental ones. The notebook [SpectralRetrieval.ipynb](Analysis\SpectralRetrieval.ipynb) contains the code and instructions for the retrieval. [ShowH5structure.ipynb](Analysis\ShowH5structure.ipynb) shows the structure and metadata of the simulation results.
+The code in [Analysis](Analysis) is used to retrive true photoelectron spectra from experimental ones. Running the following:
+
+```
+conda activate <your_env_name>
+jupyter lab
+```
+
+will open jupyter lab from which the notebooks in [Analysis](Analysis) can be run.
+
+The notebook [SpectralRetrieval.ipynb](Analysis\SpectralRetrieval.ipynb) contains the code and instructions for the retrieval. [ShowH5structure.ipynb](Analysis\ShowH5structure.ipynb) shows the structure and metadata of the simulation results.
 
 ## License
 
