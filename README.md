@@ -22,7 +22,7 @@ It can also be downloaded from <https://github.com/edosim/UVLJscatter>
 The Monte-Carlo simulation in [basisFunctionCode](basisFunctionCode) uses Julia and has only been tested with version 1.7.0, which may be downloaded and installed from [here](https://julialang.org/downloads/oldreleases/).
 The installation may be verified by running `julia --version` in the terminal or command prompt.
 
-The required dependencies are included in `Project.toml` and `Manifest.toml` and may be installed by running 
+The required dependencies are included in `Project.toml` and `Manifest.toml` and can be installed by running 
 
 ```
 julia
@@ -44,7 +44,7 @@ conda create --name <your_env_name> --file requirements.txt
 conda activate <your_env_name>
 ```
 
-The required dependencies are `numpy`, `scipy`, `matplotlib`, `h5py`, and either`jupyter lab` or `jupyter notebook`.
+The required dependencies are `numpy`, `scipy`, `matplotlib`, `h5py`, and either `jupyterlab` or `notebook`.
 
 ## Usage
 
@@ -69,7 +69,7 @@ conda activate <your_env_name>
 jupyter lab
 ```
 
-will open jupyter lab from which the notebooks in [Analysis](Analysis) can be run.
+will open JupyterLab from which the notebooks in [Analysis](Analysis) can be run.
 
 The notebook [SpectralRetrieval.ipynb](Analysis\SpectralRetrieval.ipynb) contains the code and instructions for the retrieval. [ShowH5structure.ipynb](Analysis\ShowH5structure.ipynb) shows the structure and metadata of the simulation results.
 
