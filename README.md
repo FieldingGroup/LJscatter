@@ -60,6 +60,12 @@ The file [applyConcProfile.jl](basisFunctionCode\applyConcProfile.jl) scales the
 
 The file [ScatteringCode_angles.jl](basisFunctionCode\ScatteringCode_angles.jl) is similar to [ScatteringCode.jl](basisFunctionCode\ScatteringCode.jl) but returns histograms of incidence angles of escaped electrons as a function of initial kinetic energy and initial depth. The output is saved in the folder [bases](basisFunctionCode\bases) as `allAngles.h5`. A histogram obtained by integrating over equally weighed depths is also saved as `basis_angles.txt`.
 
+The Julia files can be run as follows:
+
+```
+julia <file_name.jl>
+```
+
 ### Retrieval of true photoelectron spectra
 
 The code in [Analysis](Analysis) is used to retrive true photoelectron spectra from experimental ones. Running the following:
