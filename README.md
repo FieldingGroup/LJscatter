@@ -58,7 +58,7 @@ The file [ScatteringCode.jl](basisFunctionCode\ScatteringCode.jl) runs the simul
 
 The file [applyConcProfile.jl](basisFunctionCode\applyConcProfile.jl) scales the  output of [ScatteringCode.jl](basisFunctionCode\ScatteringCode.jl) by a depth profile and integrates it over depth. This creates histograms of final kinetic energies as a function of initial kinetic energy. The depth profiles used are described by the sum of a vertical offset and a gaussian centred at a depth of 0.1 nm and a FWHM of 0.4 nm. The ratio between the height of the Guassian and the offset is varied to obtain a series of histograms. The mean, FWHM and ratios employed in the concentration profiles can be changed in the file. The output is saved in the folder [bases](basisFunctionCode\bases) as `basisConcProfiles.h5`.
 
-The file [ScatteringCode_angles.jl](basisFunctionCode\ScatteringCode_angles.jl) is similar to [ScatteringCode.jl](basisFunctionCode\ScatteringCode.jl) but returns histograms of incidence angles of escaped electrons as a function of initial kinetic energy and initial depth. The output is saved in the folder [bases](basisFunctionCode\bases) as `allAngles.h5`. Histogram obtained by integrating over equally weighed depths is also saved as `basis_angles.txt`.
+The file [ScatteringCode_angles.jl](basisFunctionCode\ScatteringCode_angles.jl) is similar to [ScatteringCode.jl](basisFunctionCode\ScatteringCode.jl) but returns histograms of incidence angles of escaped electrons as a function of initial kinetic energy and initial depth. The output is saved in the folder [bases](basisFunctionCode\bases) as `allAngles.h5`. A histogram obtained by integrating over equally weighed depths is also saved as `basis_angles.txt`.
 
 ### Retrieval of true photoelectron spectra
 
