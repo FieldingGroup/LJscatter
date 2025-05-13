@@ -1,8 +1,8 @@
-# UVLJscatter
+# MASS-ROPES
 
 ## About
 
-UVLJscatter is a Monte-Carlo simulation program that models electron transport in liquid microjets. It models the scattering of electrons with kinetic energies below 5 eV near the surface and their transmission through the surface of liquid jets. A detailed account of its application to ultraviolet liquid-microjet photoelectron spectra is given in [Simonetti and Fielding, 2025](https://doi.org/10.26434/chemrxiv-2025-1hvbm).
+MASS-ROPES is a Monte-Carlo simulation program that models electron transport in liquid microjets and enables the retrieval of true liquid-jet photoelectron spectra from measured ones. It models the scattering of electrons with kinetic energies below 5 eV near the surface and their transmission through the surface of liquid jets. A detailed account of its application to ultraviolet liquid-microjet photoelectron spectra is given in [Simonetti and Fielding, 2025](https://doi.org/10.26434/chemrxiv-2025-1hvbm).
 
 
 
@@ -12,10 +12,10 @@ UVLJscatter is a Monte-Carlo simulation program that models electron transport i
 This repository may be cloned to your local machine using git:
 
 ```
-git clone https://github.com/edosim/UVLJscatter.git
+git clone https://github.com/FieldingGroup/MASS-ROPES.git
 ```
 
-It can also be downloaded from <https://github.com/edosim/UVLJscatter>
+It can also be downloaded from <https://github.com/FieldingGroup/MASS-ROPES>
 
 
 ### Julia setup
@@ -81,4 +81,4 @@ The notebook [SpectralRetrieval.ipynb](Analysis\SpectralRetrieval.ipynb) contain
 
 ## License
 
-This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
+This project is licensed under the GNU GPLv3 License - see [LICENSE](LICENSE) for details. The authors request that the original article is referenced in all publications which make use of MASS-ROPES or programs derived from its source code.
