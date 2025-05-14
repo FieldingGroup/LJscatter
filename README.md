@@ -82,3 +82,8 @@ The notebook [SpectralRetrieval.ipynb](Analysis\SpectralRetrieval.ipynb) contain
 ## License
 
 This project is licensed under the GNU GPLv3 License - see [LICENSE](LICENSE) for details. The authors request that the original article is referenced in all publications which make use of LJscatter or programs derived from its source code.
+
+## Contact
+
+email: h.h.fielding@ucl.ac.uk
+
