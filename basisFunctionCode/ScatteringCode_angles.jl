@@ -27,7 +27,8 @@ using StatsBase
 using HDF5
 using Roots
 
-
+# Seed to check for reproducibility
+# Random.seed!(1111)
 
 # In an older version a 4π factor was *incorrectly* used when converting from cross-section to MFP
 # Setting SolidAngle to true will include this factor.
