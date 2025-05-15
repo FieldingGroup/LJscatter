@@ -73,7 +73,7 @@ function load_input(file)
     # Assign each value to a global variable
     global cs_file = inputs["cs_file"]
     global r_grid = [x for x in inputs["r_grid start"]:inputs["r_grid step"]:inputs["r_grid stop"]] #depth grid
-    global depth_step = inputs["r_grid step"] #r_grid step size
+    global r_gridStep = inputs["r_grid step"] #r_grid step size
     global e0 = inputs["e0"] #Escape threshold
     global num_electrons = inputs["num_electrons"] # Number of random walks to perform
     global jet_radius = inputs["jet_radius"] # 10 micron radius liquid microjet
@@ -153,7 +153,7 @@ function lose_eKE(eKE, table::Matrix{Float64}, channels)
     else
         σ = sum(w) * 1e-2
     end
-    # Number density of scatterers.
+    # Number density of scatterers (water).
     ρ = (1e-21 / 18.015) * 6.022141e23
 
     # The mean free path.
@@ -165,14 +165,14 @@ function lose_eKE(eKE, table::Matrix{Float64}, channels)
 end
 
 """
-    random_walk_jet(eKE, pos, table, channels)
+    propagate(eKE, pos, table, channels; e0=e0)
 Recursively runs a single random walk step, by updating the energy and position
 of the electron. The energy loss and step length are sampled using `lose_eKE` and 
 all scattering events are assumed to be isotropic.
 When electrons reach the surface they can escape if they have enough energy or
 be reflected. Multiple reflections in
 """
-function random_walk_jet(eKE, pos, table, channels; e0=e0)
+function propagate(eKE, pos, table, channels; e0=e0)
     if eKE < 0.0
         # End trajectory
         return NaN
@@ -227,7 +227,7 @@ function random_walk_jet(eKE, pos, table, channels; e0=e0)
     end
     # Recursively run this function again, accumulating the
     # eKE loss and the change in position.
-    return random_walk_jet(eKE - loss, new_pos, table, channels)
+    return propagate(eKE - loss, new_pos, table, channels)
 end
 
 """
@@ -327,8 +327,6 @@ The *z* coordinate is the same for both the transmitted and reflected electron.
 
 Does not include double reflection, i.e., the case in which the electron must be reflected multiple
 times to remain inside the jet
-
-Does not include double reflection
 """
 function reflect_electron(new_pos, Q)
     P2 = new_pos
@@ -364,52 +362,59 @@ end
 
 
 """
-    run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
-This function runs `random_walk_jet` for all starting eKEs at a certain depth.
+    run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)
+This function runs `propagate` for all starting eKEs at a certain depth.
+
+Normally starting_eKEs are all the same. 
+
 """
-function run_jet_walk(starting_eKEs, depth, table, channels; e0=e0)
+function run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)
     pos = SVector(jet_radius - depth, 0.0, 0.0)
     out = similar(starting_eKEs)
     for i in eachindex(out)
-        out[i] = random_walk_jet(starting_eKEs[i], pos, table, channels; e0=e0)
+        out[i] = propagate(starting_eKEs[i], pos, table, channels; e0=e0)
     end
     return out
 end
 
-
-function integrate_over_r(starting_eKEs, table, channels;
-                          e0=e0, r_grid=1:0.25:1001)
+"""
+    run_depths(starting_eKEs, table, channels;
+                          e0=e0, r_grid=r_grid)
+                          
+Runs `run_depth_trajectories` for all depths. Removes invalid trajectories, i.e., electrons with negative eKE.
+Bins data with bin_data (in 0.01 eV steps between 0 and 2π.
+Scales distribution bu 2πr, accounting for the fact that electrons are initialised only on the x axis.
+"""
+function run_depths(starting_eKEs, table, channels;
+                          e0=e0, r_grid=r_grid)
     outputs = similar(r_grid,Vector{Float64})
     Threads.@threads for i in eachindex(r_grid)
-        r = r_grid[i]
-        o = run_jet_walk(starting_eKEs, r, table, channels; e0=e0)::Vector{Float64}
+        depth = r_grid[i]
+        o = run_depth_trajectories(starting_eKEs, depth, table, channels; e0=e0)::Vector{Float64}
 
         # Remove electrons with eKE <= 0 eV
         o = filter((x) -> x != NaN, o)
 
-        # Bin the data onto the 0 : 0.01 : 5 eV grid and get the counts per bin.
+        # Bin the data onto the 0.00:0.01:2π grid and get the counts per bin.
         d = bin_data(o)
         y = d[:, 2]
 
-        outputs[i] =  y .* (2 * pi * (jet_radius - r) * depth_step)
-
+        outputs[i] =  y .* (2 * pi * (jet_radius - depth) * r_gridStep)
         
     end
 
     return outputs
 end
+"""
+    apply_pdf(basis, dist; r_grid=r_grid)
 
-function apply_pdf(basis, dist; r_grid=1:0.25:1001)
+Applies simple concentration profile using functions from Distributions.jl.
+The PDF is determined at each step on the grid and the basis set integrated over depth.
+
+"""
+function apply_pdf(basis, dist; r_grid=r_grid)
     reduced = similar(basis)
-    # At each depth, we need to apply the PDF to the basis functions.
-    #
-    # In the simplest case, the PDF comes from a distribution provided by
-    # Distributions.jl (e.g. Normal() or Exponential()) and these are evaluated
-    # simply using pdf(dist, x) for each x in r_grid.
-    #
-    # For a custom profile, you would need an array with the probability at each
-    # point in r_grid. Presumably, this array would need to be normalised to sum
-    # to 1.
+
     p = [ pdf(dist, x) for x in r_grid ]
     for (i, b) in enumerate(basis)
         basis_w_pdf = b .* p
@@ -422,14 +427,16 @@ end
 
 
 
-# Take a set of data points and transfer it onto a binned grid. Typically,
-# we employ a grid spacing of 0.01 eV between 0.01 and 5.00 eV. The default
-# grid starts one point earlier due to a quirk in Histogram.
+"""
+    bin_data(data; bins=0.00:0.01:2π)
+
+Bin data according to bins and returns the left edges of the bins
+and the heights of the bins.
+"""
 function bin_data(data; bins=0.00:0.01:2π)
     f = fit(Histogram, data, bins,closed=:right)
 
-    # The last bin is removed due to the previously mentioned quirk that makes
-    # this list one item too long.
+    # Get left edges of the bins
     x = collect(f.edges[1])[1:end-1]
 
     # The weights are the number of counts in each bin.
@@ -444,10 +451,11 @@ function main()
     basis_grid = [ ones(num_electrons) * i for i in 0.01:0.01:5.0 ]
     basis_10 = map(x -> integrate_over_r(x, table, channels; e0=e0, r_grid=r_grid), basis_grid)
     
+    #Save uniform concentration profile
     basis_uni = apply_pdf(basis_10, Uniform(first(r_grid),last(r_grid)), r_grid=r_grid)
-
     writedlm("bases/basis_angles.txt", hcat(basis_uni...))
 
+    # Save complete results
     basis_mat = cat(map(x ->hcat(x...) ,basis_10)...,dims=3)
     fid = h5open("bases/allAngles.h5","cw") #this creates the file if it doesn't exist
     close(fid)
