@@ -116,7 +116,7 @@ end
 
 """
     rand_normal_positive(μ, fwhm)
-Generate a number from a normal distribution but only accept positive numbers.
+Generate a number from a normal distribution but only return a positive number.
 
 This function is used for the randomised eKE loss per inelastic collision.
 """
@@ -243,7 +243,7 @@ end
 
 """
     escape_filter(eKE, new_pos, old_pos; r = jet_radius)
-    
+
 This function determines the intersection between the vector going through two points
 and the circumference of the jet. It determines the velocity component of the vector
 perpendicular to the surface and finds the corresponding kinetic energy.
@@ -335,9 +335,9 @@ Reflects electron on the surface of the jet.
 It determines the equation of the tangent at the exit point and of the perpendicular line going through
 the unreflected point (P2), it finds their intersection A and reflects the electron through it.
 This is to determine the *x* and *y* coordinates of the reflection.
-The *z* coordinate is the same for both the transmitted and reflected electron
+The *z* coordinate is the same for both the transmitted and reflected electron.
 
-Does not include double reflection, i.e., the case in which the electron must be refledcted multiple
+Does not include double reflection, i.e., the case in which the electron must be reflected multiple
 times to remain inside the jet
 """
 function reflect_electron(new_pos, Q)
