@@ -46,7 +46,7 @@ const loss_channels_normal = Dict("vpp_L" => (0.092, 0.04),
                                   "v3"      => (0.460, 0.005),
                                   "v1-3+vL" => (0.500, 0.04),                
                                   "2v1-3"   => (0.835, 0.075),       
-                                  "electronic" => (5.0, 0.0), # this used to be 5,5 it is now (5,0), i.e. electrons are discarded
+                                  "electronic" => (5.0, 0.0), # (or "other") electrons are discarded
                                   "elastic" => (0.0, 0.0))
 
 # -------- EXTRA DATA ------------

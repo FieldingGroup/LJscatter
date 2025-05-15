@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 
 """
-applyConcProfike.jl - Part of LJscatter
+applyConcProfile.jl - Part of LJscatter
 Copyright (C) 2025 FieldingGroup
 Contact: h.h.fielding@ucl.ac.uk
 
