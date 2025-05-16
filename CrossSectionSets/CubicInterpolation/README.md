@@ -1,6 +1,7 @@
-### Cross-section sets guide.
+### Cross-section sets guide
 
 These cross-section sets were extrapolated linearly to 0 eV and interpolated with a cubic spline.
+
 NB: cross-sections set I was digitised and not inter/extrapolated.
 
 - Set I:      Digitised from Science Advances 2017, 3, e1603224.
