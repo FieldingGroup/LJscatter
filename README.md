@@ -85,5 +85,8 @@ This project is licensed under the GNU GPLv3 License - see [LICENSE](LICENSE) fo
 
 ## Contact
 
-email: h.h.fielding@ucl.ac.uk
+For questions regarding the publication, please contact the corresponding author:
+Prof Helen Fielding – h.h.fielding@ucl.ac.uk
 
+For technical questions related to the code, please contact the first author:
+Edoardo Simonetti – edoardo.simonetti.18@ucl.ac.uk
