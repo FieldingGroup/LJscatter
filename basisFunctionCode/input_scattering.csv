@@ -1,4 +1,4 @@
-cs_file,cs_improved_1b.csv,# File with cross-section data
+cs_file,cs_improved_set3_cubic.csv,# File with cross-section data
 r_grid start,0.1,# Depths start
 r_grid step,0.1,# Depths step
 r_grid stop,50,# Depths stop
