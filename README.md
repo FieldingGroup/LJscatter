@@ -35,7 +35,7 @@ in [basisFunctionCode](basisFunctionCode) from the terminal or command prompt.
 
 ### Python setup
 
-The retrieval code in [Analysis](Analysis) uses Python and Jupyter notebooks. One way to install and manage the packages in Python is to use [Anaconda](https://www.anaconda.com/download/success).
+The retrieval code in [Analysis](Analysis) uses Python in Jupyter notebooks. One way to install and manage the packages in Python is to use [Anaconda](https://www.anaconda.com/download/success).
 
 [`requirements.txt`](Analysis/requirements.txt) may be used to create a conda environment with all the required dependencies: 
 
@@ -88,5 +88,5 @@ This project is licensed under the GNU GPLv3 License - see [LICENSE](LICENSE) fo
 For questions regarding the publication, please contact the corresponding author:
 Prof Helen Fielding – h.h.fielding@ucl.ac.uk
 
-For technical questions related to the code, please contact the first author:
+If you have technical questions about the code, you may also reach out to
 Edoardo Simonetti – edoardo.simonetti.18@ucl.ac.uk
