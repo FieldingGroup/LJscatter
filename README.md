@@ -2,7 +2,7 @@
 
 ## About
 
-LJscatter is a Monte-Carlo simulation program that models electron transport in liquid microjets and enables the retrieval of true liquid-jet photoelectron spectra from measured ones. It models the scattering of electrons with kinetic energies below 5 eV near the surface and their transmission through the surface of liquid jets. A detailed account of its application to ultraviolet liquid-microjet photoelectron spectra is given in [Simonetti and Fielding, 2025](https://doi.org/10.26434/chemrxiv-2025-1hvbm).
+LJscatter is a Monte-Carlo simulation program that models electron transport in liquid microjets and enables the retrieval of true liquid-jet photoelectron spectra from measured ones. It models the scattering of electrons with kinetic energies below 5 eV near the surface and their transmission through the surface of liquid jets. A detailed account of its application to ultraviolet liquid-microjet photoelectron spectra is given in [Simonetti and Fielding, 2025](https://doi.org/10.1021/acs.jpca.5c02024).
 
 
 
