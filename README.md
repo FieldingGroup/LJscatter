@@ -19,7 +19,7 @@ It can also be downloaded from <https://github.com/FieldingGroup/LJscatter>
 
 
 ### Julia setup
-The Monte-Carlo simulation in [basisFunctionCode](basisFunctionCode) uses Julia and has only been tested with version 1.7.0, which may be downloaded and installed from [here](https://julialang.org/downloads/oldreleases/).
+The Monte-Carlo simulation in [basisFunctionCode](basisFunctionCode) uses Julia and has only been tested with version 1.8.5, which may be downloaded and installed from [here](https://julialang.org/downloads/oldreleases/).
 The installation may be verified by running `julia --version` in the terminal or command prompt.
 
 The required dependencies are included in `Project.toml` and `Manifest.toml` and can be installed by running 
